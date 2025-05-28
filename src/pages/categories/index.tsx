@@ -44,7 +44,7 @@ const CategoriesPage: NextPageWithLayout = () => {
     resolver: zodResolver(categoryFormSchema),
   });
 
-  const { data: categories, isLoading: categoryIsLoading } =
+  const { data: categories, isLoading: isCategoryLoading } =
     api.category.getCategories.useQuery();
 
   const { mutate: createCategory } = api.category.createCategory.useMutation({
@@ -158,20 +158,25 @@ const CategoriesPage: NextPageWithLayout = () => {
       </DashboardHeader>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {categories?.map((category) => (
-          <CategoryCatalogCard
-            key={category.id}
-            name={category.name}
-            productCount={category.productCount}
-            onEdit={() =>
-              handleClickEditCategory({
-                id: category.id,
-                name: category.name,
-              })
-            }
-            onDelete={() => handleClickDeleteCategory(category.id)}
-          />
-        ))}
+        {isCategoryLoading ? (
+          <p>Loading...</p>
+        ) : (
+          categories &&
+          categories.map((category) => (
+            <CategoryCatalogCard
+              key={category.id}
+              name={category.name}
+              productCount={category.productCount}
+              onEdit={() =>
+                handleClickEditCategory({
+                  id: category.id,
+                  name: category.name,
+                })
+              }
+              onDelete={() => handleClickDeleteCategory(category.id)}
+            />
+          ))
+        )}
       </div>
       {/* <div>
         {CATEGORIES.length === 0 ? (
