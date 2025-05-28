@@ -25,12 +25,16 @@ import type { ReactElement } from "react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { NextPageWithLayout } from "../_app";
+import { api } from "@/utils/api";
 
 const CategoriesPage: NextPageWithLayout = () => {
   const [createCategoryDialogOpen, setCreateCategoryDialogOpen] =
     useState(false);
   const [editCategoryDialogOpen, setEditCategoryDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  const [categoryToEdit, setCategoryToEdit] = useState<string>("0");
+
+  const apiUtils = api.useUtils();
 
   const createCategoryForm = useForm<CategoryFormSchema>({
     resolver: zodResolver(categoryFormSchema),
@@ -40,16 +44,59 @@ const CategoriesPage: NextPageWithLayout = () => {
     resolver: zodResolver(categoryFormSchema),
   });
 
+  const { data: categories, isLoading: categoryIsLoading } =
+    api.category.getCategories.useQuery();
+
+  const { mutate: createCategory } = api.category.createCategory.useMutation({
+    onSuccess: async () => {
+      await apiUtils.category.getCategories.invalidate();
+
+      alert("Successfully created a new category");
+      setCreateCategoryDialogOpen(false);
+      createCategoryForm.reset();
+    },
+  });
+
+  const { mutate: deleteCategory } =
+    api.category.deleteCategoryById.useMutation({
+      onSuccess: async () => {
+        await apiUtils.category.getCategories.invalidate();
+
+        alert("Successfully deleted a category");
+        setCategoryToDelete(null);
+      },
+    });
+
+  const { mutate: editCategory } = api.category.editCategory.useMutation({
+    onSuccess: async () => {
+      await apiUtils.category.getCategories.invalidate();
+
+      alert("Successfully edited a category");
+      setEditCategoryDialogOpen(false);
+    },
+  });
+
   const handleSubmitCreateCategory = (data: CategoryFormSchema) => {
     console.log(data);
+    createCategory({
+      name: data.name,
+    });
   };
 
   const handleSubmitEditCategory = (data: CategoryFormSchema) => {
-    console.log(data);
+    if (!categoryToEdit) {
+      return;
+    }
+
+    editCategory({
+      id: categoryToEdit,
+      name: data.name,
+    });
   };
 
-  const handleClickEditCategory = (category: Category) => {
+  const handleClickEditCategory = (category: { id: string; name: string }) => {
     setEditCategoryDialogOpen(true);
+    setCategoryToEdit(category.id);
 
     editCategoryForm.reset({
       name: category.name,
@@ -58,6 +105,12 @@ const CategoriesPage: NextPageWithLayout = () => {
 
   const handleClickDeleteCategory = (categoryId: string) => {
     setCategoryToDelete(categoryId);
+  };
+
+  const handleConfirmDeleteCategory = () => {
+    deleteCategory({
+      id: categoryToDelete!,
+    });
   };
 
   return (
@@ -104,7 +157,23 @@ const CategoriesPage: NextPageWithLayout = () => {
         </div>
       </DashboardHeader>
 
-      <div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        {categories?.map((category) => (
+          <CategoryCatalogCard
+            key={category.id}
+            name={category.name}
+            productCount={category.productCount}
+            onEdit={() =>
+              handleClickEditCategory({
+                id: category.id,
+                name: category.name,
+              })
+            }
+            onDelete={() => handleClickDeleteCategory(category.id)}
+          />
+        ))}
+      </div>
+      {/* <div>
         {CATEGORIES.length === 0 ? (
           <div className="rounded-md border">
             <div className="p-8 text-center">
@@ -127,7 +196,7 @@ const CategoriesPage: NextPageWithLayout = () => {
             ))}
           </div>
         )}
-      </div>
+      </div> */}
 
       <AlertDialog
         open={editCategoryDialogOpen}
@@ -173,7 +242,9 @@ const CategoriesPage: NextPageWithLayout = () => {
           </AlertDialogDescription>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <Button variant="destructive">Delete</Button>
+            <Button variant="destructive" onClick={handleConfirmDeleteCategory}>
+              Delete
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

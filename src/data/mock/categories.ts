@@ -15,4 +15,5 @@ export const CATEGORIES: Category[] = [
   { id: "groceries", name: "Groceries", count: 20 },
   { id: "breakfast", name: "Breakfast", count: 5 },
   { id: "lunch", name: "Lunch", count: 9 },
-]; 
+  { id: "budak", name: "Budak", count: 1 },
+];

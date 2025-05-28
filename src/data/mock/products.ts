@@ -91,4 +91,25 @@ export const PRODUCTS: Product[] = [
     category: "fast-food",
     image: "https://placehold.co/600x400",
   },
+  {
+    id: "13",
+    name: "Jean Arby Putra",
+    price: 0,
+    category: "budak",
+    image: "https://placehold.co/600x400",
+  },
+  {
+    id: "14",
+    name: "Ari Reivansyah",
+    price: 0,
+    category: "budak",
+    image: "https://placehold.co/600x400",
+  },
+  {
+    id: "15",
+    name: "Naufal Murthadho",
+    price: 0,
+    category: "budak",
+    image: "https://placehold.co/600x400",
+  },
 ];

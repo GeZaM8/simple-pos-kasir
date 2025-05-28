@@ -11,5 +11,16 @@ datasource db {
     // Further reading:
     // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
     // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
-    url      = env("DATABASE_URL")
+    directUrl = env("DIRECT_URL") // untuk sync ke db
+    url      = env("DATABASE_URL") // untuk query
+}
+
+model Category {
+    id String @id @default(uuid())
+
+    name String
+    productCount Int @default(0)
+    
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
