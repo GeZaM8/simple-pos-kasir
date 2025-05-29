@@ -149,7 +149,7 @@ const ProductsPage: NextPageWithLayout = () => {
             name={product.name}
             price={product.price}
             image={product.imageUrl ?? ""}
-            category={product.category.id}
+            category={product.category.name}
             onEdit={() => void 0}
             onDelete={() => void 0}
           />
