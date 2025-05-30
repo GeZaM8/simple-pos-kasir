@@ -55,21 +55,6 @@ export const productRouter = createTRPCRouter({
       return newProduct;
     }),
 
-  createProductImageUploadSignedUrl: protectedProcedure.mutation(async () => {
-    const { data, error } = await supabaseAdmin.storage
-      .from(Bucket.ProductImages)
-      .createSignedUploadUrl(`${Date.now()}.jpeg`);
-
-    if (error) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: error.message,
-      });
-    }
-
-    return data;
-  }),
-
   deleteProductById: protectedProcedure
     .input(
       z.object({
@@ -95,7 +80,7 @@ export const productRouter = createTRPCRouter({
         name: z.string().min(3, "Minimum of 3 characters"),
         price: z.number().min(1000),
         categoryId: z.string(),
-        // imageUrl: z.string().url(),
+        imageUrl: z.string().url(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -113,10 +98,25 @@ export const productRouter = createTRPCRouter({
               id: input.categoryId,
             },
           },
-          imageUrl: "https://placehold.co/600x400",
+          imageUrl: input.imageUrl,
         },
       });
 
       return product;
     }),
+
+  createProductImageUploadSignedUrl: protectedProcedure.mutation(async () => {
+    const { data, error } = await supabaseAdmin.storage
+      .from(Bucket.ProductImages)
+      .createSignedUploadUrl(`${Date.now()}.jpeg`);
+
+    if (error) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: error.message,
+      });
+    }
+
+    return data;
+  }),
 });

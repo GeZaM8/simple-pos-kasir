@@ -39,3 +39,22 @@ export async function uploadFileToSignedUrl({
     throw error;
   }
 }
+
+export async function deleteFileFromBucket({
+  path,
+  bucket,
+}: {
+  path: string;
+  bucket: Bucket;
+}) {
+  try {
+    await supabaseClient.storage.from(bucket).remove([path]);
+  } catch (error) {
+    throw error;
+  }
+}
+
+export function extractPathFromSupabaseUrl(url: string): string | null {
+  const match = url.match(/\/storage\/v1\/object\/public\/(.+)$/);
+  return match?.[1] ?? null;
+}

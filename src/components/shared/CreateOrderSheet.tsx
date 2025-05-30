@@ -21,15 +21,18 @@ import {
   SheetTitle,
 } from "../ui/sheet";
 import { PaymentQRCode } from "./PaymentQrCode";
+import { useCartStore } from "@/store/cart";
+import { api } from "@/utils/api";
 
 type OrderItemProps = {
   id: string;
   name: string;
   price: number;
   quantity: number;
+  imageUrl: string;
 };
 
-const OrderItem = ({ id, name, price, quantity }: OrderItemProps) => {
+const OrderItem = ({ id, name, price, quantity, imageUrl }: OrderItemProps) => {
   return (
     <div className="flex gap-3" key={id}>
       <div className="relative aspect-square h-20 shrink-0 overflow-hidden rounded-xl">
@@ -79,21 +82,42 @@ export const CreateOrderSheet = ({
   open,
   onOpenChange,
 }: CreateOrderSheetProps) => {
+  const cartStore = useCartStore();
+
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [paymentInfoLoading, setPaymentInfoLoading] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
 
+  const subTotal = cartStore.items.reduce((a, b) => {
+    return a + b.price * b.qty;
+  }, 0);
+
   const subtotal = 100000;
-  const tax = useMemo(() => subtotal * 0.17, [subtotal]);
+  const tax = useMemo(() => subtotal * 0.1, [subtotal]);
   const grandTotal = useMemo(() => subtotal + tax, [subtotal, tax]);
 
-  const handleCreateOrder = () => {
-    setPaymentDialogOpen(true);
-    setPaymentInfoLoading(true);
+  const { mutate: createOrder, data: createOrderResponse } =
+    api.order.createOrder.useMutation({
+      onSuccess: () => {
+        setPaymentDialogOpen(true);
+      },
+    });
 
-    setTimeout(() => {
-      setPaymentInfoLoading(false);
-    }, 3000);
+  const handleCreateOrder = () => {
+    createOrder({
+      orderItems: cartStore.items.map((item) => {
+        return {
+          productId: item.id,
+          quantity: item.qty,
+        };
+      }),
+    });
+    // setPaymentDialogOpen(true);
+    // setPaymentInfoLoading(true);
+
+    // setTimeout(() => {
+    //   setPaymentInfoLoading(false);
+    // }, 3000);
   };
 
   const handleRefresh = () => {
@@ -114,7 +138,16 @@ export const CreateOrderSheet = ({
           <div className="space-y-4 overflow-y-scroll p-4">
             <h1 className="text-xl font-medium">Order Items</h1>
             <div className="flex flex-col gap-6">
-              {/* Map order items here */}
+              {cartStore.items.map((item) => (
+                <OrderItem
+                  key={item.id}
+                  id={item.id}
+                  name={item.name}
+                  price={item.price}
+                  imageUrl={item.imageUrl}
+                  quantity={item.qty}
+                />
+              ))}
             </div>
           </div>
 
@@ -164,15 +197,19 @@ export const CreateOrderSheet = ({
                 </Button>
 
                 {!paymentSuccess ? (
-                  <PaymentQRCode qrString="qr-string" />
+                  <PaymentQRCode
+                    qrString={createOrderResponse?.qrString ?? ""}
+                  />
                 ) : (
                   <CheckCircle2 className="size-80 text-green-500" />
                 )}
 
-                <p className="text-3xl font-medium">{toRupiah(grandTotal)}</p>
+                <p className="text-3xl font-medium">
+                  {toRupiah(createOrderResponse?.order.grandTotal ?? 0)}
+                </p>
 
                 <p className="text-muted-foreground text-sm">
-                  Transaction ID: 1234567890
+                  Transaction ID: {createOrderResponse?.order.id}
                 </p>
               </>
             )}
