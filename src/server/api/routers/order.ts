@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { createQRIS } from "../xendit";
+import { createQRIS } from "../../xendit";
 
 export const orderRouter = createTRPCRouter({
   createOrder: protectedProcedure

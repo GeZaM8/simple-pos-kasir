@@ -1,7 +1,7 @@
 import { create } from "domain";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { z } from "zod";
-import { supabaseAdmin } from "../supabase-admin";
+import { supabaseAdmin } from "../../supabase-admin";
 import { Bucket } from "@/server/bucket";
 import { TRPCError } from "@trpc/server";
 
