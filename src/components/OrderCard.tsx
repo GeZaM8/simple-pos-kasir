@@ -1,4 +1,6 @@
 import { Button } from "@/components/ui/button";
+import { toRupiah } from "@/utils/toRupiah";
+import { OrderStatus } from "@prisma/client";
 
 export interface Order {
   id: string;
@@ -8,34 +10,52 @@ export interface Order {
 }
 
 interface OrderCardProps {
-  order: Order;
+  id: string;
+  totalAmount: number;
+  totalItems: number;
+  status: OrderStatus;
   onFinishOrder?: (orderId: string) => void;
+  isFinishingOrder: boolean;
 }
 
-export const OrderCard = ({ order, onFinishOrder }: OrderCardProps) => {
+export const OrderCard = ({
+  id,
+  totalAmount,
+  totalItems,
+  status,
+  onFinishOrder,
+  isFinishingOrder,
+}: OrderCardProps) => {
   const handleFinishOrder = () => {
     if (onFinishOrder) {
-      onFinishOrder(order.id);
+      onFinishOrder(id);
+    }
+  };
+
+  const getBadgeColor = () => {
+    switch (status) {
+      case OrderStatus.AWAITING_PAYMENT:
+        return "bg-yellow-100 text-yellow-800";
+      case OrderStatus.PROCESSING:
+        return "bg-blue-100 text-blue-800";
+      case OrderStatus.DONE:
+        return "bg-green-100 text-green-800";
     }
   };
 
   return (
     <div className="bg-card rounded-lg border p-4 shadow-sm">
-      <div className="mb-3 flex items-start justify-between">
+      <div className="mb-3 flex flex-col">
         <div>
           <h4 className="text-muted-foreground text-sm font-medium">
             Order ID
           </h4>
-          <p className="font-mono text-sm">{order.id}</p>
+          <p className="font-mono text-sm">{id}</p>
         </div>
         <div
-          className={`rounded-full px-2 py-1 text-xs font-medium ${
-            order.status === "Processing"
-              ? "bg-yellow-100 text-yellow-800"
-              : "bg-green-100 text-green-800"
-          }`}
+          className={`mt-4 w-fit rounded-full px-2 py-1 text-xs font-medium ${getBadgeColor()}`}
         >
-          {order.status}
+          {status}
         </div>
       </div>
 
@@ -44,19 +64,24 @@ export const OrderCard = ({ order, onFinishOrder }: OrderCardProps) => {
           <h4 className="text-muted-foreground text-sm font-medium">
             Total Amount
           </h4>
-          <p className="text-lg font-bold">${order.totalAmount.toFixed(2)}</p>
+          <p className="text-lg font-bold">${toRupiah(totalAmount)}</p>
         </div>
         <div>
           <h4 className="text-muted-foreground text-sm font-medium">
             Total Items
           </h4>
-          <p className="text-lg font-bold">{order.totalItems}</p>
+          <p className="text-lg font-bold">{totalItems}</p>
         </div>
       </div>
 
-      {order.status === "Processing" && (
-        <Button onClick={handleFinishOrder} className="w-full" size="sm">
-          Finish Order
+      {status === OrderStatus.PROCESSING && (
+        <Button
+          onClick={handleFinishOrder}
+          className="w-full"
+          size="sm"
+          disabled={isFinishingOrder}
+        >
+          {isFinishingOrder ? "Finishing Order..." : "Finish Order"}
         </Button>
       )}
     </div>

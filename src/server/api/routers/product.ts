@@ -4,28 +4,43 @@ import { z } from "zod";
 import { supabaseAdmin } from "../../supabase-admin";
 import { Bucket } from "@/server/bucket";
 import { TRPCError } from "@trpc/server";
+import { Prisma } from "@prisma/client";
 
 export const productRouter = createTRPCRouter({
-  getProducts: protectedProcedure.query(async ({ ctx }) => {
-    const { db, session } = ctx;
+  getProducts: protectedProcedure
+    .input(
+      z.object({
+        categoryId: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const { db } = ctx;
 
-    const products = await db.product.findMany({
-      select: {
-        id: true,
-        name: true,
-        price: true,
-        imageUrl: true,
-        category: {
-          select: {
-            id: true,
-            name: true,
+      const whereClause: Prisma.ProductWhereInput = {};
+
+      console.log(input.categoryId);
+      if (input.categoryId !== "all") {
+        whereClause.categoryId = input.categoryId;
+      }
+
+      const products = await db.product.findMany({
+        where: whereClause,
+        select: {
+          id: true,
+          name: true,
+          price: true,
+          imageUrl: true,
+          category: {
+            select: {
+              id: true,
+              name: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    return products;
-  }),
+      return products;
+    }),
 
   createProduct: protectedProcedure
     .input(

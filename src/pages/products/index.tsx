@@ -31,6 +31,7 @@ import {
   extractPathFromSupabaseUrl,
 } from "@/lib/supabase";
 import { Bucket } from "@/server/bucket";
+import { toast } from "sonner";
 
 const ProductsPage: NextPageWithLayout = () => {
   const [createProductDialogOpen, setCreateProductDialogOpen] = useState(false);
@@ -51,14 +52,16 @@ const ProductsPage: NextPageWithLayout = () => {
 
   const apiUtils = api.useUtils();
 
-  const { data: products } = api.product.getProducts.useQuery();
+  const { data: products } = api.product.getProducts.useQuery({
+    categoryId: "all",
+  });
 
   const { mutate: createProduct, isPending: isCreateProductPending } =
     api.product.createProduct.useMutation({
       onSuccess: async () => {
         await apiUtils.product.getProducts.invalidate();
 
-        alert("Successfully created new product");
+        toast("Successfully created new product");
         setCreateProductDialogOpen(false);
         setUplaodedImageUrl(null);
         createProductForm.reset();
@@ -70,7 +73,7 @@ const ProductsPage: NextPageWithLayout = () => {
       onSuccess: async () => {
         await apiUtils.product.getProducts.invalidate();
 
-        alert("Successfully deleted a product");
+        toast("Successfully deleted a product");
         setDeleteUploadImageUrl(null);
       },
     });
@@ -80,7 +83,7 @@ const ProductsPage: NextPageWithLayout = () => {
       onSuccess: async () => {
         await apiUtils.product.getProducts.invalidate();
 
-        alert("Successfully edited a product");
+        toast("Successfully edited a product");
 
         console.log(deleteUploadImageUrl);
 
@@ -120,7 +123,7 @@ const ProductsPage: NextPageWithLayout = () => {
 
   const handelSubmitCreateProduct = (values: ProductFormSchema) => {
     if (!uplaodedImageUrl) {
-      alert("Please upload an image or waiting for the image to be uploaded");
+      toast("Please upload an image or waiting for the image to be uploaded");
       return;
     }
 

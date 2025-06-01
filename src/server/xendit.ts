@@ -1,7 +1,11 @@
-import { PaymentRequest } from "xendit-node";
+import { PaymentMethod, PaymentRequest } from "xendit-node";
 import { addMinutes } from "date-fns";
 
 export const xenditPaymentRequestClient = new PaymentRequest({
+  secretKey: process.env.XENDIT_MONEY_IN_KEY!,
+});
+
+export const xenditPaymentMethodClient = new PaymentMethod({
   secretKey: process.env.XENDIT_MONEY_IN_KEY!,
 });
 
@@ -23,7 +27,7 @@ export const createQRIS = async (params: createQRISParams) => {
         qrCode: {
           channelCode: "DANA",
           channelProperties: {
-            expiresAt: params.expirasAt ?? addMinutes(new Date(), 15),
+            expiresAt: params.expirasAt ?? addMinutes(new Date(), 1000),
           },
         },
         referenceId: params.orderId,

@@ -27,6 +27,7 @@ import { useForm } from "react-hook-form";
 import type { NextPageWithLayout } from "../_app";
 import { api } from "@/utils/api";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 const CategoriesPage: NextPageWithLayout = () => {
   const [createCategoryDialogOpen, setCreateCategoryDialogOpen] =
@@ -53,7 +54,7 @@ const CategoriesPage: NextPageWithLayout = () => {
       onSuccess: async () => {
         await apiUtils.category.getCategories.invalidate();
 
-        alert("Successfully created a new category");
+        toast("Successfully created a new category");
         setCreateCategoryDialogOpen(false);
         createCategoryForm.reset();
       },
@@ -64,7 +65,7 @@ const CategoriesPage: NextPageWithLayout = () => {
       onSuccess: async () => {
         await apiUtils.category.getCategories.invalidate();
 
-        alert("Successfully deleted a category");
+        toast("Successfully deleted a category");
         setCategoryToDelete(null);
       },
     });
@@ -74,13 +75,12 @@ const CategoriesPage: NextPageWithLayout = () => {
       onSuccess: async () => {
         await apiUtils.category.getCategories.invalidate();
 
-        alert("Successfully edited a category");
+        toast("Successfully edited a category");
         setEditCategoryDialogOpen(false);
       },
     });
 
   const handleSubmitCreateCategory = (data: CategoryFormSchema) => {
-    console.log(data);
     createCategory({
       name: data.name,
     });

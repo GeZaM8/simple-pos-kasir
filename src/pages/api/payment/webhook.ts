@@ -8,11 +8,19 @@ type XenditWebhookBody = {
     amount: number;
     payment_request_id: string;
     reference_id: string;
-    status: "SUCCESSED" | "FAILED";
+    status: "SUCCEEDED" | "FAILED";
   };
 };
 
 const handler: NextApiHandler = async (req, res) => {
+  const headers = req.headers;
+
+  const webhookToken = headers["x-callback-token"];
+
+  if (webhookToken !== process.env.XENDIT_WEBHOOK_TOKEN) {
+    return res.status(401).send("Unauthorized");
+  }
+
   const body = req.body as XenditWebhookBody;
 
   const order = await db.order.findUnique({
@@ -25,7 +33,7 @@ const handler: NextApiHandler = async (req, res) => {
     return res.status(404).send("Order not found");
   }
 
-  if (body.data.status !== "SUCCESSED") {
+  if (body.data.status !== "SUCCEEDED") {
     // update order menjadi failed
     return res.status(200);
   }

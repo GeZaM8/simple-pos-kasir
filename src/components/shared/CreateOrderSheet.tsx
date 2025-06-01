@@ -4,7 +4,7 @@ import { PRODUCTS } from "@/data/mock";
 import { toRupiah } from "@/utils/toRupiah";
 import { CheckCircle2, Minus, Plus } from "lucide-react";
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -23,6 +23,8 @@ import {
 import { PaymentQRCode } from "./PaymentQrCode";
 import { useCartStore } from "@/store/cart";
 import { api } from "@/utils/api";
+import { toast } from "sonner";
+import { xenditPaymentRequestClient } from "@/server/xendit";
 
 type OrderItemProps = {
   id: string;
@@ -37,7 +39,7 @@ const OrderItem = ({ id, name, price, quantity, imageUrl }: OrderItemProps) => {
     <div className="flex gap-3" key={id}>
       <div className="relative aspect-square h-20 shrink-0 overflow-hidden rounded-xl">
         <Image
-          src={PRODUCTS.find((p) => p.id === id)?.image ?? ""}
+          src={imageUrl}
           alt={name}
           fill
           unoptimized
@@ -99,6 +101,7 @@ export const CreateOrderSheet = ({
   const { mutate: createOrder, data: createOrderResponse } =
     api.order.createOrder.useMutation({
       onSuccess: () => {
+        toast("Successfully created an order");
         setPaymentDialogOpen(true);
       },
     });
@@ -112,16 +115,48 @@ export const CreateOrderSheet = ({
         };
       }),
     });
-    // setPaymentDialogOpen(true);
-    // setPaymentInfoLoading(true);
-
-    // setTimeout(() => {
-    //   setPaymentInfoLoading(false);
-    // }, 3000);
   };
 
+  const { mutate: simulatePayment } = api.order.simulatePayment.useMutation({
+    onSuccess: () => {
+      handleRefresh();
+      toast("Simulated Payment");
+    },
+  });
+
+  const {
+    mutate: checkOrderPaymentStatus,
+    data: orderPaid,
+    isPending: isCheckOrderPending,
+    reset: resetCheckOrderStatus,
+  } = api.order.checkOrderStatus.useMutation({
+    onSuccess: (orderPaid) => {
+      if (orderPaid) {
+        setPaymentSuccess(true);
+        cartStore.clearCart();
+      }
+    },
+  });
+
   const handleRefresh = () => {
-    setPaymentSuccess(true);
+    if (!createOrderResponse) return;
+
+    checkOrderPaymentStatus({
+      orderId: createOrderResponse?.order.id,
+    });
+  };
+
+  const handleSimulatePayment = () => {
+    if (!createOrderResponse) return;
+    simulatePayment({
+      orderId: createOrderResponse?.order.id,
+    });
+  };
+
+  const handleClosePaymentDialog = () => {
+    setPaymentDialogOpen(false);
+    onOpenChange(false);
+    resetCheckOrderStatus();
   };
 
   return (
@@ -192,9 +227,11 @@ export const CreateOrderSheet = ({
               </div>
             ) : (
               <>
-                <Button variant="link" onClick={handleRefresh}>
-                  Refresh
-                </Button>
+                {!orderPaid && (
+                  <Button variant="link" onClick={handleRefresh}>
+                    {!isCheckOrderPending ? "Refresh" : "Refreshing..."}
+                  </Button>
+                )}
 
                 {!paymentSuccess ? (
                   <PaymentQRCode
@@ -211,6 +248,10 @@ export const CreateOrderSheet = ({
                 <p className="text-muted-foreground text-sm">
                   Transaction ID: {createOrderResponse?.order.id}
                 </p>
+
+                <Button variant={"link"} onClick={handleSimulatePayment}>
+                  Simulate Payment
+                </Button>
               </>
             )}
           </div>
@@ -221,6 +262,7 @@ export const CreateOrderSheet = ({
                 disabled={paymentInfoLoading}
                 variant="outline"
                 className="w-full"
+                onClick={handleClosePaymentDialog}
               >
                 Done
               </Button>
